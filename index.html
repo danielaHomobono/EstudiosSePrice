@@ -79,27 +79,53 @@
         .form-group:last-of-type {
             margin-bottom: 2.5rem;
         }
+        .error-message {
+            color: #dc3545;
+            margin-top: 1rem;
+            text-align: center;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="login-container">
             <h2 class="text-center mb-4">Clínica SePrice</h2>
-            <form>
+            <form id="loginForm">
                 <div class="form-group">
                     <label for="username" class="form-label">Usuario</label>
-                    <input type="text" class="form-control" id="username" placeholder="Ingrese su usuario">
+                    <input type="text" class="form-control" id="username" placeholder="Ingrese su usuario" required>
                 </div>
                 <div class="form-group">
                     <label for="password" class="form-label">Contraseña</label>
-                    <input type="password" class="form-control" id="password" placeholder="Ingrese su contraseña">
+                    <input type="password" class="form-control" id="password" placeholder="Ingrese su contraseña" required>
                 </div>
                 <div class="form-group">
                     <button type="submit" class="btn btn-primary">Ingresar</button>
+                </div>
+                <div id="errorMessage" class="error-message" style="display: none;">
+                    Usuario o contraseña incorrectos. Por favor, intente nuevamente.
                 </div>
             </form>
         </div>
     </div>
     <script src="bootstrap/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            
+            if (username === 'admin' && password === 'password123') {
+                
+                window.location.href = 'gestion-estudios.html';
+            } else {
+                
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+        });
+    </script>
 </body>
 </html>
