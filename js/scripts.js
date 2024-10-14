@@ -1,4 +1,4 @@
-/// Function to show/hide sections
+
 function showSection(sectionId) {
     const sections = document.querySelectorAll('.section');
     sections.forEach(section => {
@@ -11,7 +11,7 @@ function showSection(sectionId) {
     }
 }
 
-// Function to handle form submissions
+
 function handleFormSubmit(formId, successMessage) {
     document.getElementById(formId).addEventListener('submit', function(e) {
         e.preventDefault();
@@ -20,7 +20,7 @@ function handleFormSubmit(formId, successMessage) {
     });
 }
 
-// Initialize form handlers
+
 document.addEventListener('DOMContentLoaded', function() {
     handleFormSubmit('registro-paciente-form', 'Paciente registrado exitosamente');
     handleFormSubmit('agendar-turno-form', 'Turno agendado exitosamente');
@@ -31,12 +31,12 @@ document.addEventListener('DOMContentLoaded', function() {
     handleFormSubmit('recepcion-paciente-form', 'Estado del paciente actualizado');
 });
 
-// Function to verify appointment
+
 function verificarTurno() {
     const nombrePaciente = document.getElementById('nombre-paciente').value;
     const fechaTurno = document.getElementById('fecha-turno').value;
     
-    // This is a placeholder. In a real application, you would check against a database.
+   
     if (nombrePaciente && fechaTurno) {
         alert(`Turno verificado para ${nombrePaciente} en la fecha ${fechaTurno}`);
     } else {
@@ -44,11 +44,11 @@ function verificarTurno() {
     }
 }
 
-// Function to check inventory
+
 function verificarStock() {
     const nombreInsumo = document.getElementById('nombre-insumo').value;
     
-    // This is a placeholder. In a real application, you would check against a database.
+    
     if (nombreInsumo) {
         alert(`Verificando stock de ${nombreInsumo}. Esta función se conectaría a una base de datos en una aplicación real.`);
     } else {
