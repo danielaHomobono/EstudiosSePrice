@@ -1,4 +1,4 @@
-
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -16,7 +16,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     
     <!-- Enlace a la hoja de estilos CSS -->
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="{% static 'coreadmin/css/styles.css' %}">
+    
+    <!-- Enlace a la hoja de JS -->
+    <link rel="stylesheet" href="{% static 'coreadmin/js/scripts.js' %}">
     
     <style>
         /* Estilos adicionales para ocultar y mostrar secciones */

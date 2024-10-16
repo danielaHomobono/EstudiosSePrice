@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,6 +7,9 @@
     <title>Login - Clínica SePrice</title>
     <link rel="stylesheet" href="bootstrap/bootstrap.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Enlace a la hoja de estilos CSS -->
+    <link rel="stylesheet" href="{% static 'coreadmin/css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'coreadmin/js/scripts.js' %}">
     <style>
         body {
             background-image: url('img/fondo1.jpg');
@@ -120,7 +124,7 @@
             
             if (username === 'admin' && password === 'password123') {
                 
-                window.location.href = 'gestion-estudios.html';
+                window.location.href = 'gestion_estudios.html';
             } else {
                 
                 document.getElementById('errorMessage').style.display = 'block';
