@@ -1,23 +1,6 @@
 from django.db import models
 
 # Create your models here.
-class Paciente(models.Model):
-    id = models.AutoField(primary_key=True, verbose_name='ID Paciente')
-    name = models.CharField(max_length=50, verbose_name='Nombre')
-    last_name = models.CharField(max_length=50, verbose_name='Apellido')
-    dni = models.CharField(unique=True, max_length=8, verbose_name='DNI')
-    phone = models.CharField(max_length=10, verbose_name='Teléfono')
-    email = models.EmailField(unique=False, verbose_name='email')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-       return f'{self.id} - {self.name} {self.last_name}'
-    
-    class Meta:
-        verbose_name_plural = "Pacientes"
-
-
 class ProveedoresSeguros (models.Model):
     proveedor_id = models.AutoField(primary_key=True, verbose_name='ID Proveedor')
     proveedor_nombre = models.CharField(max_length=50, verbose_name='Nombre Proveedor')
@@ -29,22 +12,30 @@ class ProveedoresSeguros (models.Model):
     
     class Meta:
         verbose_name_plural = "Proveedores de Seguros"
+        ordering = ['proveedor_nombre']
 
 
-class SegurosPacientes (models.Model):
-    seguro_paciente_id = models.AutoField(primary_key=True, verbose_name='ID Seguro')
-    seguro_nombre = models.CharField(max_length=50, verbose_name='Plan de Seguro')
-    id = models.ForeignKey(Paciente, on_delete=models.CASCADE)
-    proveedor_id = models.ForeignKey(ProveedoresSeguros, on_delete=models.CASCADE)
-    numero_asociado = models.CharField(unique=True, max_length=15, verbose_name='Número de Afiliado')
+
+class Paciente(models.Model):
+    id = models.AutoField(primary_key=True, verbose_name='ID Paciente')
+    name = models.CharField(max_length=50, verbose_name='Nombre')
+    last_name = models.CharField(max_length=50, verbose_name='Apellido')
+    dni = models.CharField(unique=True, max_length=8, verbose_name='DNI')
+    phone = models.CharField(max_length=10, verbose_name='Teléfono')
+    email = models.EmailField(unique=False, verbose_name='email')
+    proveedor_nombre = models.ForeignKey(ProveedoresSeguros, on_delete=models.CASCADE)
+    plan_seguro = models.CharField(max_length=50, verbose_name='Plan')
+    numero_asociado = models.CharField(unique=True, max_length=20, verbose_name='Número de Afiliado')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-       return f'{self.seguro_paciente_id} - {self.seguro_nombre} - {self.numero_asociado}'
+       return f'{self.last_name} {self.name}'
     
     class Meta:
-        verbose_name_plural = "Seguros de Pacientes"
+        verbose_name_plural = "Pacientes"
+        ordering = ['last_name']
+
 
 
 class Especialidades (models.Model):
@@ -58,6 +49,8 @@ class Especialidades (models.Model):
 
     class Meta:
         verbose_name_plural = "Especialidades"
+        ordering = ['especialidad_nombre']
+
 
 
 class Profesionales (models.Model):
@@ -73,6 +66,8 @@ class Profesionales (models.Model):
 
     class Meta:
         verbose_name_plural = "Profesionales"
+        ordering = ['profesional_apellido']
+
 
 
 class Turnos (models.Model):
@@ -95,6 +90,8 @@ class Turnos (models.Model):
 
     class Meta:
         verbose_name_plural = "Turnos"
+        ordering = ['turno_fecha']
+
 
 
 class Estudios (models.Model):
@@ -110,6 +107,8 @@ class Estudios (models.Model):
 
     class Meta:
         verbose_name_plural = "Estudios"
+        ordering = ['estudio_nombre']
+
 
 
 class Pagos (models.Model):
@@ -138,6 +137,8 @@ class Pagos (models.Model):
 
     class Meta:
         verbose_name_plural = "Pagos"
+        ordering = ['pago_fecha']
+
 
 
 class Facturas (models.Model):
@@ -154,6 +155,8 @@ class Facturas (models.Model):
 
     class Meta:
         verbose_name_plural = "Facturas"
+        ordering = ['factura_numero']
+
 
 
 class Insumos (models.Model):
@@ -171,6 +174,8 @@ class Insumos (models.Model):
 
     class Meta:
         verbose_name_plural = "Insumos"
+        ordering = ['insumo_nombre']
+
 
 
 class SolicitudesInsumos (models.Model):
@@ -195,6 +200,8 @@ class SolicitudesInsumos (models.Model):
 
     class Meta:
         verbose_name_plural = "Solicitudes de Insumos"
+        ordering = ['solicitud_fecha']
+
 
 
 class VisitasGuardia (models.Model):
@@ -221,6 +228,8 @@ class VisitasGuardia (models.Model):
 
     class Meta:
         verbose_name_plural = "Visitas de Guardia"
+        ordering = ['visita_fecha']
+
 
 
 class VisitasLaboratorio (models.Model):
@@ -242,6 +251,8 @@ class VisitasLaboratorio (models.Model):
 
     class Meta:
         verbose_name_plural = "Visitas de Laboratorio"
+        ordering = ['visita_fecha']
+
 
 
 class ResultadoLaboratorio (models.Model):
@@ -258,3 +269,4 @@ class ResultadoLaboratorio (models.Model):
     
     class Meta:
         verbose_name_plural = "Resultados de Laboratorio"
+        ordering = ['resultado_fecha']

@@ -18,9 +18,10 @@ from django.contrib import admin
 from django.urls import path
 from django.urls import include
 from coreadmin import views
+from coreadmin.admin import site_admin
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('admin/', site_admin.urls),
     path('administracion/', include('coreadmin.urls')),
     
     ]
