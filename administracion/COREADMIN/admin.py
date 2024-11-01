@@ -4,12 +4,6 @@ from coreadmin.models import *
 from django.contrib.auth.models import User
 
 
-
-admin.site.site_header = 'Sistema de Gestión Clinica SePrice'
-admin.site.site_title = 'Clinica SePrice'
-admin.site.index_title = 'Panel de Control'
-
-
 class UserAdmin(BaseUserAdmin):
     list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff')
     search_fields = ('username', 'email', 'first_name', 'last_name')
@@ -19,9 +13,18 @@ class UserAdmin(BaseUserAdmin):
     fieldsets = ()
 
 
+class UserAdmin(admin.ModelAdmin):
+    list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff')
+    search_fields = ('username', 'email', 'first_name', 'last_name')
+    readonly_fields = ('last_login', 'date_joined')
+    filter_horizontal = ()
+    list_filter = ()
+    fieldsets = ()
+
+
 class PacienteAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'last_name', 'dni')
-    search_fields = ('id', 'name', 'last_name', 'dni')
+    list_display = ('paciente_id', 'name', 'last_name', 'dni')
+    search_fields = ('paciente_id', 'name', 'last_name', 'dni')
     readonly_fields = ('created_at', 'updated_at')
     filter_horizontal = ()
     list_filter = ()
@@ -101,20 +104,19 @@ class ResultadoLaboratorioAdmin(admin.ModelAdmin):
 
 
 class TurnosAdmin(admin.ModelAdmin):
-    list_display = ('appointment_id', 'patient', 'professional', 'date', 'time', 'status')
-    list_filter = ('status', 'date', 'professional')
-    search_fields = ('patient__name', 'professional__profesional_nombre', 'notes')
+    list_display = ('appointment_id', 'paciente', 'profesional', 'app_date', 'app_time', 'status')
+    list_filter = ('status', 'app_date', 'profesional')
+    search_fields = ('paciente_name', 'profesional_nombre', 'notes')
     readonly_fields = ('created_at', 'updated_at')
 
 
-class IngresoVisitaAdmin(admin.ModelAdmin):
-    list_display = ('visita_id', 'paciente', 'visita_fecha', 'visita_hora', 'visita_tipo', 'visita_gravedad', 'estado', 'fecha_hora_completado')
-    list_filter = ('visita_fecha', 'visita_tipo', 'visita_gravedad', 'estado')
-    search_fields = ('paciente__name', 'visita_tipo', 'visita_gravedad', 'estado')
+class IngresoPacienteAdmin(admin.ModelAdmin):
+    list_display = ('ingreso_id', 'paciente', 'profesional', 'fecha_ingreso', 'fecha_hora_completado', 'ingreso_tipo', 'ingreso_gravedad', 'estado')
+    search_fields = ('paciente_name', 'fecha_ingreso', 'fecha_hora_completado', 'ingreso_tipo', 'ingreso_gravedad', 'estado')
     readonly_fields = ('created_at', 'updated_at')
 
 
-
+admin.site.register(Admin, UserAdmin)
 admin.site.register(Paciente, PacienteAdmin)
 admin.site.register(ProveedoresSeguros)
 admin.site.register(Especialidades, EspecialidadesAdmin)
@@ -126,4 +128,4 @@ admin.site.register(Insumos, InsumosAdmin)
 admin.site.register(SolicitudesInsumos, SolicitudesInsumosAdmin)
 admin.site.register(ResultadoLaboratorio, ResultadoLaboratorioAdmin)
 admin.site.register(Turnos, TurnosAdmin)
-admin.site.register(IngresoVisita, IngresoVisitaAdmin)
+admin.site.register(IngresoPaciente, IngresoPacienteAdmin)
