@@ -29,7 +29,7 @@ admin.site.index_title = 'Panel de Control'
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('admin', admin.site.urls),
     path('', views.home_view, name=''),
     path('', include('coreadmin.urls')),
     # path('logout/', auth_views.LogoutView.as_view(template_name='appointments/account/logout.html'),name='logout'),
