@@ -137,7 +137,7 @@ class Profesionales (models.Model):
     status = models.BooleanField(default=False)  # doctor status(approved/on-hold)
 
     def __str__(self):
-        return f'{self.profesional_nombre} Perfil Profesional'
+        return f'{self.profesional_nombre} {self.profesional_apellido}'
 
     class Meta:
         verbose_name_plural = "Profesionales"
@@ -155,10 +155,6 @@ class Insumos(models.Model):
 
     def __str__(self):
         return f'{self.insumo_id} - {self.insumo_nombre} Información Insumo'
-
-    class Meta:
-        verbose_name_plural = "Insumos"
-        ordering = ['insumo_nombre']
 
             
     def decrease_stock(self, amount):
@@ -194,7 +190,7 @@ class Estudios(models.Model):
     estudio_descripcion = models.CharField(max_length=100, verbose_name='Descripción Estudio')
     estudio_precio = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Precio Estudio')
     profesional = models.ForeignKey('Profesionales', on_delete=models.CASCADE, related_name="estudios", default=1)
-    app_total = models.IntegerField(default=0)  # total patients/appointments completed by doctor
+    app_total = models.IntegerField(verbose_name='Total de turnos', default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     insumos = models.ManyToManyField('Insumos', related_name="estudios", blank=True)
@@ -221,7 +217,7 @@ class Estudios(models.Model):
 
             
     def __str__(self):
-        return f'{self.estudio_id} - {self.estudio_nombre} Información Estudios'
+        return f'{self.estudio_id} - {self.estudio_nombre} - {self.estudio_precio}'
 
     class Meta:
         verbose_name_plural = "Estudios"
@@ -289,7 +285,7 @@ class IngresoPaciente(models.Model):
         ordering = ['fecha_ingreso']
 
     def __str__(self):
-        return f'{self.visita_id} - {self.paciente} - {self.estado}'
+        return f'{self.ingreso_id} - {self.paciente} - {self.estado}'
 
     def create_payment_record(self):
         """
