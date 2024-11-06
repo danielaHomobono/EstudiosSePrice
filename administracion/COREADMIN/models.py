@@ -277,8 +277,10 @@ class IngresoPaciente(models.Model):
     HistoriaClinica = models.ForeignKey('HistoriaClinica', on_delete=models.CASCADE, null=True, blank=True)
     fecha_hora_completado = models.DateTimeField(verbose_name='Fecha y Hora Completado', null=True, blank=True)
     insumos = models.ManyToManyField(Insumos, related_name='appointments')
+    SalaEspera = models.ManyToManyField('SalaEspera', related_name='appointments', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
 
     class Meta:
         verbose_name_plural = "Ingreso"
