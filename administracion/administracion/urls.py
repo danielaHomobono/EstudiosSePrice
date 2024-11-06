@@ -18,8 +18,24 @@ from django.contrib import admin
 from django.urls import path
 from django.urls import include
 
+from coreadmin import views
+from django.contrib.auth import views as auth_views
+from django.conf import settings
+from django.conf.urls.static import static
+
+admin.site.site_header = 'Sistema de Gestión Clinica SePrice'
+admin.site.site_title = 'Clinica SePrice'
+admin.site.index_title = 'Panel de Control'
+
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('administracion/', include('coreadmin.urls')),
-    ]
+    path('admin', admin.site.urls),
+    path('', views.home_view, name=''),
+    path('', include('coreadmin.urls')),
+    # path('logout/', auth_views.LogoutView.as_view(template_name='appointments/account/logout.html'),name='logout'),
+]
+
+
+# Retrieve images from /media/
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
