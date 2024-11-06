@@ -316,3 +316,16 @@ class AppointmentUpdateForm(forms.ModelForm):
         model = Turnos
         fields = ['description']
 
+
+
+class EstudiosAdminForm(forms.ModelForm):
+    class Meta:
+        model = Estudios
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'especialidad' in self.data:
+                pass
+        elif self.instance.pk:
+            self.fields['profesional'].queryset = self.instance.especialidad.profesionales.all()

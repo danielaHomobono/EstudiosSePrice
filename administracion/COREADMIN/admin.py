@@ -3,6 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from coreadmin.models import *
 from django.contrib.auth.models import User
 from .models import Turnos, Paciente, Estudios, IngresoPaciente, Pagos
+from .forms import EstudiosAdminForm
 
 
 class UserAdmin(BaseUserAdmin):
@@ -32,6 +33,15 @@ class PacienteAdmin(admin.ModelAdmin):
     fieldsets = ()
 
 
+class ProveedoresSegurosAdmin(admin.ModelAdmin):
+    list_display = ('proveedor_id', 'proveedor_nombre')
+    search_fields = ('proveedor_id', 'proveedor_nombre')
+    readonly_fields = ('created_at', 'updated_at')
+    filter_horizontal = ()
+    list_filter = ()
+    fieldsets = ()
+
+
 class EspecialidadesAdmin(admin.ModelAdmin):
     list_display = ('especialidad_id', 'especialidad_nombre')
     search_fields = ('especialidad_id', 'especialidad_nombre')
@@ -51,8 +61,9 @@ class ProfesionalesAdmin(admin.ModelAdmin):
 
 
 class EstudiosAdmin(admin.ModelAdmin):
-    list_display = ('estudio_id', 'estudio_nombre')
-    search_fields = ('estudio_id', 'estudio_nombre')
+    form = EstudiosAdminForm
+    list_display = ('estudio_id', 'estudio_nombre', 'profesional')
+    search_fields = ('estudio_id', 'estudio_nombre', 'profesional')
     readonly_fields = ('created_at', 'updated_at')
     filter_horizontal = ()
     list_filter = ()
