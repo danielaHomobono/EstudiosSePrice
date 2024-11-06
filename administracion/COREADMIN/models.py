@@ -1,7 +1,10 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
-import datetime
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
+from datetime import datetime, timedelta
+from decimal import Decimal
 
 
 
@@ -47,7 +50,7 @@ class ProveedoresSeguros (models.Model):
 
 class Paciente(models.Model):
     paciente_id = models.AutoField(primary_key=True, verbose_name='ID Paciente')
-    name = models.CharField(max_length=50, verbose_name='Nombre')
+    first_name = models.CharField(max_length=50, verbose_name='Nombre')
     last_name = models.CharField(max_length=50, verbose_name='Apellido')
     dni = models.CharField(unique=True, max_length=8, verbose_name='DNI')
     phone = models.CharField(max_length=10, verbose_name='Teléfono')
@@ -56,15 +59,55 @@ class Paciente(models.Model):
     proveedor_nombre = models.ForeignKey(ProveedoresSeguros, on_delete=models.CASCADE)
     plan_seguro = models.CharField(max_length=50, verbose_name='Plan')
     numero_asociado = models.CharField(unique=True, max_length=20, verbose_name='Número de Afiliado')
+    HistoriaClinica = models.ForeignKey('HistoriaClinica', on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f'{self.paciente.username} Perfil Paciente'
+        return f'{self.first_name} {self.last_name}'
     
     class Meta:
         verbose_name_plural = "Pacientes"
         ordering = ['last_name']
+
+
+class HistoriaClinica (models.Model):
+    historia_id = models.AutoField(primary_key=True, verbose_name='ID Historia Clínica')
+    paciente_id = models.ForeignKey(Paciente, on_delete=models.CASCADE)
+    historia_fecha = models.DateTimeField(auto_now_add=True)
+    historia_descripcion = models.TextField(verbose_name='Descripción')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.historia_id} Historia Clínica'
+
+    class Meta:
+        verbose_name_plural = "Historias Clínicas"
+        ordering = ['historia_fecha']
+
+class HistoriaClinicaDetalle (models.Model):
+    detalle_id = models.AutoField(primary_key=True, verbose_name='ID Detalle Historia Clínica')
+    historia_id = models.ForeignKey(HistoriaClinica, on_delete=models.CASCADE)
+    detalle_fecha = models.DateTimeField(auto_now_add=True)
+    detalle_descripcion = models.TextField(verbose_name='Descripción')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.detalle_id} Detalle Historia Clínica'
+
+    class Meta:
+        verbose_name_plural = "Detalle Historia Clínica"
+        ordering = ['detalle_fecha']
+        unique_together = ('historia_id', 'detalle_fecha')
+        indexes = [
+            models.Index(fields=['historia_id', 'detalle_fecha']),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=['historia_id', 'detalle_fecha'], name='unique_historia_detalle'),
+        ]
+        db_table = 'historia_clinica_detalle'
 
 
 
@@ -101,17 +144,82 @@ class Profesionales (models.Model):
         ordering = ['profesional_apellido']
 
 
-
-class Estudios (models.Model):
-    estudio_id = models.AutoField(primary_key=True, verbose_name='ID Estudio')
-    estudio_nombre = models.CharField(max_length=50, verbose_name='Nombre Estudio')
-    estudio_descripcion = models.CharField(max_length=100, verbose_name='Descripción Estudio')
-    estudio_precio = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Precio Estudio')
-    profesional = models.ForeignKey(Profesionales, on_delete=models.CASCADE, related_name="Estudios", default=1)  # doctor fk
-    app_total = models.IntegerField(default=0)  # total patients/appointments completed by doctor
+class Insumos(models.Model):
+    insumo_id = models.AutoField(primary_key=True, verbose_name='ID Insumo')
+    insumo_nombre = models.CharField(max_length=50, verbose_name='Nombre Insumo')
+    stock_actual = models.IntegerField(verbose_name='Stock Actual')
+    stock_minimo = models.IntegerField(verbose_name='Stock Mínimo')
+    unidad_medida = models.CharField(max_length=50, verbose_name='Unidad de Medida')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return f'{self.insumo_id} - {self.insumo_nombre} Información Insumo'
+
+    class Meta:
+        verbose_name_plural = "Insumos"
+        ordering = ['insumo_nombre']
+
+            
+    def decrease_stock(self, amount):
+        if amount < 0:
+            raise ValueError("La cantidad a decrementar no puede ser negativa")
+        if self.stock_actual >= amount:
+            self.stock_actual -= amount
+            self.save()
+        else:
+            raise ValueError(f"No hay suficiente stock para {self.insumo_nombre}")
+
+    def increase_stock(self, amount):
+        if amount < 0:
+            raise ValueError("La cantidad a incrementar no puede ser negativa")
+        self.stock_actual += amount
+        self.save()
+
+    def clean(self):
+        if self.stock_actual < 0:
+            raise ValueError("El stock actual no puede ser negativo")
+        if self.stock_minimo < 0:
+            raise ValueError("El stock mínimo no puede ser negativo")
+
+    class Meta:
+        verbose_name_plural = "Insumos"
+        ordering = ['insumo_nombre']
+
+
+class Estudios(models.Model):
+    estudio_id = models.AutoField(primary_key=True, verbose_name='ID Estudio')
+    especialidad = models.ForeignKey('Especialidades', on_delete=models.CASCADE, related_name="estudios", default="Seleccione una opción")
+    estudio_nombre = models.CharField(max_length=50, verbose_name='Nombre Estudio')
+    estudio_descripcion = models.CharField(max_length=100, verbose_name='Descripción Estudio')
+    estudio_precio = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Precio Estudio')
+    profesional = models.ForeignKey('Profesionales', on_delete=models.CASCADE, related_name="estudios", default=1)
+    app_total = models.IntegerField(default=0)  # total patients/appointments completed by doctor
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    insumos = models.ManyToManyField('Insumos', related_name="estudios", blank=True)
+
+    def __str__(self):
+        return f'{self.estudio_id} - {self.estudio_nombre} - {self.estudio_precio}'
+    
+    def update_insumo_stock(self):
+        for insumo in self.insumos.all():
+            quantity_used = self.get_insumo_quantity(insumo)
+            if quantity_used is not None:
+                insumo.decrease_stock(quantity_used)
+
+    def get_insumo_quantity(self, insumo):
+        # Implement your logic to determine how much of each insumo is used.
+        # For example, you might have a field in an intermediate table:
+        # return some_quantity_from_intermediate_table
+        return 1  # Placeholder implementation
+
+    @receiver(m2m_changed, sender='coreadmin.Estudios_insumos')
+    def update_stock_on_insumos_change(sender, instance, action, **kwargs):
+        if action in ["post_add", "post_remove", "post_clear"]:
+            instance.update_insumo_stock()
+
+            
     def __str__(self):
         return f'{self.estudio_id} - {self.estudio_nombre} Información Estudios'
 
@@ -127,9 +235,8 @@ class Turnos(models.Model):
     especialidad = models.ForeignKey('Especialidades', on_delete=models.CASCADE, related_name='turnos')
     estudio = models.ForeignKey('Estudios', on_delete=models.CASCADE, related_name='turnos')
     profesional = models.ForeignKey('Profesionales', on_delete=models.CASCADE, related_name='turnos')
-    app_link = models.TextField(null=True, blank=True)  # video call room link
-    app_date = models.DateField(null=True, blank=True)  # call date
-    app_time = models.TimeField(null=True, blank=True)  # call time/slot
+    date = models.DateField(null=True, blank=True)
+    time = models.TimeField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=[
         ('SCHEDULED', 'Programada'),
         ('CONFIRMED', 'Confirmada'),
@@ -137,17 +244,15 @@ class Turnos(models.Model):
         ('CHECKED_OUT', 'Checked out'),
         ('CANCELLED', 'Cancelada'),
     ], default='SCHEDULED')
-    completed = models.BooleanField(default=False)  # appointment completed/to-be-done
-    notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f'{self.description} Información del turno'
-    
+        return f'{self.appointment_id} - {self.paciente} - {self.date} {self.time}'
+        
     class Meta:
-        unique_together = ('profesional', 'app_date', 'app_time')
-        ordering = ['app_date', 'app_time']
+        unique_together = ('profesional', 'date', 'time')
+        ordering = ['date', 'time']
         verbose_name_plural = "Turnos"
 
 
@@ -155,7 +260,8 @@ class IngresoPaciente(models.Model):
     ingreso_id = models.AutoField(primary_key=True, verbose_name='ID Visita')
     paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE)
     profesional = models.ForeignKey(Profesionales, on_delete=models.CASCADE)
-    estudio_nombre = models.ForeignKey(Estudios, on_delete=models.CASCADE)
+    appointment_id = models.ForeignKey(Turnos, on_delete=models.CASCADE)
+    estudio = models.ForeignKey(Estudios, on_delete=models.CASCADE)
     fecha_ingreso = models.DateField(verbose_name='Fecha Visita')
     ingreso_hora = models.TimeField(verbose_name='Hora Visita')
     ingreso_tipo = models.CharField(max_length=20, choices=[
@@ -172,7 +278,9 @@ class IngresoPaciente(models.Model):
         ('En progreso', 'En progreso'),
         ('Completada', 'Completada'),
     ])
+    HistoriaClinica = models.ForeignKey('HistoriaClinica', on_delete=models.CASCADE, null=True, blank=True)
     fecha_hora_completado = models.DateTimeField(verbose_name='Fecha y Hora Completado', null=True, blank=True)
+    insumos = models.ManyToManyField(Insumos, related_name='appointments')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -183,36 +291,86 @@ class IngresoPaciente(models.Model):
     def __str__(self):
         return f'{self.visita_id} - {self.paciente} - {self.estado}'
 
+    def create_payment_record(self):
+        """
+        Creates a payment record for the patient's service.
+        """
+        try:
+            Pagos.objects.create(
+                ingreso_paciente=self,
+                monto=self.estudios.precio
+            )
+            return True
+        except Exception as e:
+            # Log the error
+            print(f"Error creating payment record: {str(e)}")
+            return False
+
+    def log_patient_and_charge_fee(self):
+        # Create payment record
+        Pagos.objects.create( ingreso_paciente=self, monto=self.servicio.precio )
+
+    def get_insumo_quantity(self, insumo):
+        """
+        Returns the quantity of the given insumo used for this appointment.
+        Assumes each insumo is used once per appointment if it's associated.
+        """
+        if self.insumos.filter(id=insumo.id).exists():
+            return 1
+        return 0
+
+    def add_insumo(self, insumo):
+        """
+        Adds an insumo to this appointment.
+        """
+        self.insumos.add(insumo)
+
+    def remove_insumo(self, insumo):
+        """
+        Removes an insumo from this appointment.
+        """
+        self.insumos.remove(insumo)
+
+    def get_all_insumos(self):
+        """
+        Returns all insumos associated with this appointment.
+        """
+        return self.insumos.all()
+
+    def get_total_insumos_count(self):
+        """
+        Returns the total count of insumos used in this appointment.
+        """
+        return self.insumos.count()
 
 
-class Pagos (models.Model):
-    pago_id = models.AutoField(primary_key=True, verbose_name='ID Pago')
-    turno_id = models.ForeignKey(Turnos, on_delete=models.CASCADE)
-    pago_creacion = models.DateField(verbose_name='Fecha Creación')
-    pago_fecha = models.DateField(verbose_name='Fecha Pago')
-    pago_monto = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Monto Pago')
-    pago_medio_ENUM = (
-        ('Efectivo', 'Efectivo'),
-        ('Tarjeta de débito', 'Tarjeta de débito'),
-        ('Tarjeta de crédito', 'Tarjeta de crédito'),
-        ('Seguro', 'Seguro'),
-    )
-    pago_estado_NUM = (
-        ('Pendiente', 'Pendiente'),
-        ('Acreditado', 'Acreditado'),
-        ('Rechazado', 'Rechazado'),
-    )
-    paciente_id = models.ForeignKey(Paciente, on_delete=models.CASCADE)
+class SalaEspera(models.Model):
+    sala_id = models.AutoField(primary_key=True, verbose_name='ID Sala')
+    sala_nombre = models.CharField(max_length=50, verbose_name='Nombre Sala')
+    IngresoPaciente = models.ForeignKey('IngresoPaciente', on_delete=models.CASCADE, verbose_name='Ingreso Paciente')
+    profesional = models.ForeignKey('Profesionales', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Profesional')
+    estudio = models.ForeignKey('Estudios', on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Estudio')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f'{self.pago_id} - {self.pago_monto} - {self.pago_estado_NUM}'
+        return f'{self.sala_id} - {self.sala_nombre} - {self.IngresoPaciente}'
 
     class Meta:
-        verbose_name_plural = "Pagos"
-        ordering = ['pago_fecha']
+        verbose_name = 'Sala de Espera'
+        verbose_name_plural = 'Salas de Espera'
 
+
+class Pagos(models.Model):
+    ingreso_paciente = models.ForeignKey(IngresoPaciente, on_delete=models.CASCADE, related_name='pagos')
+    fecha_pago = models.DateTimeField(auto_now_add=True)
+    monto = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"Pago de {self.ingreso_paciente.paciente} por {self.monto} el {self.fecha_pago}"
+    
+    class Meta:
+        verbose_name_plural = "Pagos"
 
 
 class Facturas (models.Model):
@@ -230,25 +388,6 @@ class Facturas (models.Model):
     class Meta:
         verbose_name_plural = "Facturas"
         ordering = ['factura_numero']
-
-
-
-class Insumos (models.Model):
-    insumo_id = models.AutoField(primary_key=True, verbose_name='ID Insumo')
-    insumo_nombre = models.CharField(max_length=50, verbose_name='Nombre Insumo')
-    insumo_descripcion = models.CharField(max_length=100, verbose_name='Descripción Insumo')
-    stock_actual = models.IntegerField(verbose_name='Stock Actual')
-    stock_minimo = models.IntegerField(verbose_name='Stock Mínimo')
-    unidad_medida = models.CharField(max_length=50, verbose_name='Unidad de Medida')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f'{self.insumo_id} - {self.insumo_nombre} - {self.stock_actual}'
-
-    class Meta:
-        verbose_name_plural = "Insumos"
-        ordering = ['insumo_nombre']
 
 
 

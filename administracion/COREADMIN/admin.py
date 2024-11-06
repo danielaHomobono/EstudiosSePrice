@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from coreadmin.models import *
 from django.contrib.auth.models import User
+from .models import Turnos, Paciente, Estudios, IngresoPaciente, Pagos
 
 
 class UserAdmin(BaseUserAdmin):
@@ -23,8 +24,8 @@ class UserAdmin(admin.ModelAdmin):
 
 
 class PacienteAdmin(admin.ModelAdmin):
-    list_display = ('paciente_id', 'name', 'last_name', 'dni')
-    search_fields = ('paciente_id', 'name', 'last_name', 'dni')
+    list_display = ('paciente_id', 'first_name', 'last_name', 'dni')
+    search_fields = ('paciente_id', 'first_name', 'last_name', 'dni')
     readonly_fields = ('created_at', 'updated_at')
     filter_horizontal = ()
     list_filter = ()
@@ -52,15 +53,6 @@ class ProfesionalesAdmin(admin.ModelAdmin):
 class EstudiosAdmin(admin.ModelAdmin):
     list_display = ('estudio_id', 'estudio_nombre')
     search_fields = ('estudio_id', 'estudio_nombre')
-    readonly_fields = ('created_at', 'updated_at')
-    filter_horizontal = ()
-    list_filter = ()
-    fieldsets = ()
-
-
-class PagosAdmin(admin.ModelAdmin):
-    list_display = ('pago_id', 'pago_creacion', 'pago_fecha', 'pago_monto', 'pago_medio_ENUM', 'pago_estado_NUM', 'paciente_id')
-    search_fields = ('pago_id', 'pago_creacion', 'pago_fecha', 'pago_monto', 'pago_medio_ENUM', 'pago_estado_NUM', 'paciente_id')
     readonly_fields = ('created_at', 'updated_at')
     filter_horizontal = ()
     list_filter = ()
@@ -104,16 +96,52 @@ class ResultadoLaboratorioAdmin(admin.ModelAdmin):
 
 
 class TurnosAdmin(admin.ModelAdmin):
-    list_display = ('appointment_id', 'paciente', 'profesional', 'app_date', 'app_time', 'status')
-    list_filter = ('status', 'app_date', 'profesional')
-    search_fields = ('paciente_name', 'profesional_nombre', 'notes')
+    list_display = ('appointment_id', 'paciente', 'profesional', 'date', 'time', 'status')
+    list_filter = ('status', 'date', 'profesional')
+    search_fields = ('paciente_first_name', 'profesional_nombre', 'notes')
     readonly_fields = ('created_at', 'updated_at')
+
+
+class HistoriaClinicaAdmin(admin.ModelAdmin):
+    list_display = ('historia_id', 'paciente', 'fecha_creacion', 'fecha_modificacion')
+    search_fields = ('paciente_name', 'fecha_creacion', 'fecha_modificacion')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+class HistoriaClinicaDetalleAdmin(admin.ModelAdmin):
+    list_display = ('detalle_id', 'historia', 'fecha_creacion', 'fecha_modificacion')
+    search_fields = ('historia_id', 'fecha_creacion', 'fecha_modificacion')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+class SalaEsperaAdmin(admin.ModelAdmin):
+    list_display = ('sala_id', 'sala_nombre', 'IngresoPaciente', 'profesional', 'estudio')
+    search_fields = ('sala_id', 'sala_nombre', 'IngresoPaciente', 'profesional', 'estudio')
+    readonly_fields = ('created_at', 'updated_at')
+
+
+class PagosInline(admin.TabularInline):
+    model = Pagos
+    extra = 1
+
+@admin.action(description='Log patient and charge fee')
+def log_patient_and_charge_fee(modeladmin, request, queryset):
+    for ingreso in queryset:
+        Pagos.objects.create(
+            ingreso_paciente=ingreso,
+            monto=ingreso.estudio.precio
+        )
 
 
 class IngresoPacienteAdmin(admin.ModelAdmin):
-    list_display = ('ingreso_id', 'paciente', 'profesional', 'fecha_ingreso', 'fecha_hora_completado', 'ingreso_tipo', 'ingreso_gravedad', 'estado')
-    search_fields = ('paciente_name', 'fecha_ingreso', 'fecha_hora_completado', 'ingreso_tipo', 'ingreso_gravedad', 'estado')
-    readonly_fields = ('created_at', 'updated_at')
+    list_display = ('paciente', 'fecha_ingreso', 'estudio')
+    actions = [log_patient_and_charge_fee]
+    inlines = [PagosInline]
+
+
+class PagosAdmin(admin.ModelAdmin):
+    list_display = ('ingreso_paciente', 'fecha_pago', 'monto')
+    readonly_fields = ('fecha_pago',)
 
 
 admin.site.register(Admin, UserAdmin)
@@ -129,3 +157,6 @@ admin.site.register(SolicitudesInsumos, SolicitudesInsumosAdmin)
 admin.site.register(ResultadoLaboratorio, ResultadoLaboratorioAdmin)
 admin.site.register(Turnos, TurnosAdmin)
 admin.site.register(IngresoPaciente, IngresoPacienteAdmin)
+admin.site.register(SalaEspera)
+admin.site.register(HistoriaClinica)
+admin.site.register(HistoriaClinicaDetalle)

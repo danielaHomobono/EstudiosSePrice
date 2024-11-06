@@ -19,8 +19,17 @@ from coreadmin.forms import AdminRegistrationForm, AdminUpdateForm, AdminAppoint
     PacienteUpdateForm, PacienteAppointmentForm, ProfesionalesRegistrationForm, ProfesionalesUpdateForm, AppointmentUpdateForm, \
     AppointmentConfirmationForm
 from coreadmin.models import Admin, Profesionales, Paciente, Turnos, Estudios, IngresoPaciente
-
 import datetime
+from django.shortcuts import render, get_object_or_404
+from .models import IngresoPaciente, Paciente, Estudios
+from django.http import HttpResponse
+
+def log_patient(request, paciente_id, estudio_id):
+    paciente = get_object_or_404(Paciente, pk=paciente_id)
+    servicio = get_object_or_404(Estudios, pk=estudio_id)
+    ingreso_paciente = IngresoPaciente.objects.create(paciente=paciente, estudio=estudio)
+    ingreso_paciente.log_patient_and_charge_fee()
+    return HttpResponse("Paciente ingresado y pago registrado.")
 
 
 # Home
