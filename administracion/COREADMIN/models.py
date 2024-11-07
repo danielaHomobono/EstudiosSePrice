@@ -72,7 +72,7 @@ class Paciente(models.Model):
 
 
 class HistoriaClinica (models.Model):
-    historia_id = models.AutoField(primary_key=True, verbose_name='ID Historia Clínica')
+    historia_id = models.AutoField(primary_key=True, verbose_name='ID')
     paciente_id = models.ForeignKey(Paciente, on_delete=models.CASCADE)
     historia_fecha = models.DateTimeField(auto_now_add=True)
     historia_descripcion = models.TextField(verbose_name='Descripción')
@@ -80,35 +80,11 @@ class HistoriaClinica (models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f'{self.historia_id} Historia Clínica'
+        return f'{self.historia_id}'
 
     class Meta:
         verbose_name_plural = "Historias Clínicas"
         ordering = ['historia_fecha']
-
-class HistoriaClinicaDetalle (models.Model):
-    detalle_id = models.AutoField(primary_key=True, verbose_name='ID Detalle Historia Clínica')
-    historia_id = models.ForeignKey(HistoriaClinica, on_delete=models.CASCADE)
-    detalle_fecha = models.DateTimeField(auto_now_add=True)
-    detalle_descripcion = models.TextField(verbose_name='Descripción')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f'{self.detalle_id} Detalle Historia Clínica'
-
-    class Meta:
-        verbose_name_plural = "Detalle Historia Clínica"
-        ordering = ['detalle_fecha']
-        unique_together = ('historia_id', 'detalle_fecha')
-        indexes = [
-            models.Index(fields=['historia_id', 'detalle_fecha']),
-        ]
-        constraints = [
-            models.UniqueConstraint(fields=['historia_id', 'detalle_fecha'], name='unique_historia_detalle'),
-        ]
-        db_table = 'historia_clinica_detalle'
-
 
 
 class Especialidades (models.Model):
@@ -429,6 +405,6 @@ class ResultadoLaboratorio (models.Model):
         return f'{self.resultado_id} - {self.resultado_fecha}'
     
     class Meta:
-        verbose_name_plural = "Resultados de Laboratorio"
+        verbose_name_plural = "Resultados"
         ordering = ['resultado_fecha']
 
