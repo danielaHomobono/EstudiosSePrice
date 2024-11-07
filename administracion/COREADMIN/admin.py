@@ -114,14 +114,8 @@ class TurnosAdmin(admin.ModelAdmin):
 
 
 class HistoriaClinicaAdmin(admin.ModelAdmin):
-    list_display = ('historia_id', 'paciente', 'fecha_creacion', 'fecha_modificacion')
-    search_fields = ('paciente_name', 'fecha_creacion', 'fecha_modificacion')
-    readonly_fields = ('created_at', 'updated_at')
-
-
-class HistoriaClinicaDetalleAdmin(admin.ModelAdmin):
-    list_display = ('detalle_id', 'historia', 'fecha_creacion', 'fecha_modificacion')
-    search_fields = ('historia_id', 'fecha_creacion', 'fecha_modificacion')
+    list_display = ('historia_id', 'paciente')
+    search_fields = ('paciente')
     readonly_fields = ('created_at', 'updated_at')
 
 
@@ -170,4 +164,4 @@ admin.site.register(Turnos, TurnosAdmin)
 admin.site.register(IngresoPaciente, IngresoPacienteAdmin)
 admin.site.register(SalaEspera)
 admin.site.register(HistoriaClinica)
-admin.site.register(HistoriaClinicaDetalle)
+
